@@ -48,59 +48,61 @@ SYNTHESIZE_SINGLETON_FOR_CLASS(FTLocationSimulator)
 		if(!fakeLocationsPath)
 			fakeLocationsPath = [[NSBundle mainBundle] pathForResource:@"fakeLocations" ofType:@"kml"];
         
-        NSStringEncoding    enc; 
-        NSError             *error = nil;
+		NSStringEncoding    enc; 
+		NSError             *error = nil;
         
 		NSString *fakeLocationsFile = [[NSString alloc] initWithContentsOfFile:fakeLocationsPath
                                        usedEncoding:&enc error:&error];
-        if ( error == nil ) {
-            NSString *coordinatesString = [fakeLocationsFile stringByMatching:@"<coordinates>[^-0-9]*(.+?)[^-0-9]*</coordinates>"
+        	if ( error == nil ) {
+            		NSString *coordinatesString = [fakeLocationsFile stringByMatching:@"<coordinates>[^-0-9]*(.+?)[^-0-9]*</coordinates>"
                                                                       options:RKLMultiline|RKLDotAll 
                                                                       inRange:NSMakeRange(0, fakeLocationsFile.length) 
                                                                       capture:1
-                                                                        error:NULL];
-            NSScanner *scanner = [NSScanner scannerWithString:coordinatesString];
-            while ([scanner isAtEnd] == NO) {
-                NSString *coordinate = nil;
-                [scanner scanUpToCharactersFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] intoString:&coordinate];
-                if (fakeLocations == nil)
-                    fakeLocations = [[NSMutableArray alloc] init];
-                [(NSMutableArray*)fakeLocations addObject:coordinate];
-            }
+                                                                        error:NULL];	
+                                                                        
+                      	NSScanner *scanner = [NSScanner scannerWithString:coordinatesString];
+            		while ([scanner isAtEnd] == NO) {
+                		NSString *coordinate = nil;
+                		
+                		[scanner scanUpToCharactersFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] intoString:&coordinate];
+                		if (fakeLocations == nil)
+                    			fakeLocations = [[NSMutableArray alloc] init];
+                		[(NSMutableArray*)fakeLocations addObject:coordinate];
+            		}
             
-            if([[NSUserDefaults standardUserDefaults] objectForKey:@"FakeLocationsUpdateInterval"])
-                updateInterval = [[NSUserDefaults standardUserDefaults] doubleForKey:@"FakeLocationsUpdateInterval"];
-            else
-                updateInterval = FAKE_CORE_LOCATION_UPDATE_INTERVAL;
-        } else {
-            NSLog(@"initWithContentsOfFile error, file : %@, error: %@", fakeLocationsPath, error);
-            [error release];
-        }
-        [fakeLocationsFile release];
+            		if([[NSUserDefaults standardUserDefaults] objectForKey:@"FakeLocationsUpdateInterval"])
+                		updateInterval = [[NSUserDefaults standardUserDefaults] doubleForKey:@"FakeLocationsUpdateInterval"];
+            		else
+                		updateInterval = FAKE_CORE_LOCATION_UPDATE_INTERVAL;
+        	} else {
+            		NSLog(@"initWithContentsOfFile error, file : %@, error: %@", fakeLocationsPath, error);
+            		[error release];
+        	}
+        	[fakeLocationsFile release];	// here to avoid warning
 	}
 	// select a new fake location
 	NSArray *latLong = [[fakeLocations objectAtIndex:index] componentsSeparatedByString:@","];
 	CLLocationDegrees   lat = [[latLong objectAtIndex:1] doubleValue];
 	CLLocationDegrees   lon = [[latLong objectAtIndex:0] doubleValue];
-    CLLocationDirection currCourse = 0;
-    CLLocationSpeed     currSpeed = defaultSpeed+(rand()%10 < 5 ? -1.0 : 1.0)*(double)(defaultSpeed/5.0 * (float)rand()/(float)RAND_MAX);
+	CLLocationDirection currCourse = 0;
+	CLLocationSpeed     currSpeed = defaultSpeed+(rand()%10 < 5 ? -1.0 : 1.0)*(double)(defaultSpeed/5.0 * (float)rand()/(float)RAND_MAX);
     
-    if ( index 		) {
-        currCourse = [GeoUtilities courseFromWayPoint1:oldLocation.coordinate toWayPoint2:CLLocationCoordinate2DMake(lat, lon)];
+	if ( index ) {
+        	currCourse = [GeoUtilities courseFromWayPoint1:oldLocation.coordinate toWayPoint2:CLLocationCoordinate2DMake(lat, lon)];
  		CLLocationDistance	dist = [GeoUtilities distanceBetweenWayPoint1:oldLocation.coordinate andWayPoint2:CLLocationCoordinate2DMake(lat, lon)];
-        NSDate              *timeStamp = [[NSDate dateWithTimeInterval:dist/currSpeed sinceDate:lastTimeStamp] retain];
+        	NSDate              *timeStamp = [[NSDate dateWithTimeInterval:dist/currSpeed sinceDate:lastTimeStamp] retain];
         
-        [lastTimeStamp release];
-        lastTimeStamp = timeStamp;
-    }
+        	[lastTimeStamp release];
+		lastTimeStamp = timeStamp;
+	}
 
 	self.location = [[[CLLocation alloc] initWithCoordinate:CLLocationCoordinate2DMake(lat, lon)
-												   altitude:0
-										 horizontalAccuracy:1
-										   verticalAccuracy:0
+						   altitude:0
+					 horizontalAccuracy:1
+					    erticalAccuracy:0
                                                      course:currCourse
                                                       speed:currSpeed
-												  timestamp:lastTimeStamp] autorelease];
+						  timestamp:lastTimeStamp] autorelease];
 	
 	// update the userlocation view
 	if (self.mapView) {
